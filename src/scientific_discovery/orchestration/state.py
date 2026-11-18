@@ -19,13 +19,16 @@ class ResearchState(TypedDict, total=False):
     generated_hypotheses: List[str]
     selected_hypothesis: str
 
+    # Critic Agent
+    critic_feedback: str
+    evaluation_status: str
+
     # Code Executor Agent
     experiment_code: str
     execution_result: Dict[str, Any]
 
-    # Critic Agent
-    critic_feedback: str
-    evaluation_status: str
+    # Complete experiment history
+    experiment_history: List[Dict[str, Any]]
 
     # Research Synthesis
     final_report: str
@@ -33,4 +36,7 @@ class ResearchState(TypedDict, total=False):
     # Workflow management
     current_step: str
     iteration_count: int
+    max_iterations: int
+
+    # Error tracking
     errors: List[str]

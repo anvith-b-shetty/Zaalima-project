@@ -7,7 +7,10 @@ from scientific_discovery.orchestration.state import ResearchState
 MAX_ITERATIONS = 3
 
 
+# -----------------------------------------
 # Agent 1: Literature Reviewer
+# -----------------------------------------
+
 def literature_reviewer(state: ResearchState):
     print("\n[Literature Reviewer] Reviewing research literature...")
 
@@ -20,93 +23,189 @@ def literature_reviewer(state: ResearchState):
     }
 
 
+# -----------------------------------------
 # Agent 2: Hypothesis Generator
+# -----------------------------------------
+
 def hypothesis_generator(state: ResearchState):
-    print("\n[Hypothesis Generator] Generating hypotheses...")
+    print("\n[Hypothesis Generator] Generating hypothesis...")
 
     findings = state.get("research_findings", [])
+    feedback = state.get("critic_feedback", "")
+    iteration = state.get("iteration_count", 0)
 
-    hypotheses = [
-        f"Research hypothesis based on: {finding}"
-        for finding in findings
-    ]
+    if feedback:
+        hypothesis = (
+            "Revised hypothesis: "
+            "Investigate the research question using improved "
+            f"experimental design. Critic feedback: {feedback}"
+        )
+    else:
+        hypothesis = (
+            "Initial hypothesis: "
+            f"{findings[0] if findings else state.get('research_query', '')}"
+        )
+
+    hypotheses = list(state.get("generated_hypotheses", []))
+    hypotheses.append(hypothesis)
+
+    print(f"Hypothesis: {hypothesis}")
 
     return {
         "generated_hypotheses": hypotheses,
-        "selected_hypothesis": hypotheses[0] if hypotheses else "",
+        "selected_hypothesis": hypothesis,
         "current_step": "code_execution"
     }
 
 
+# -----------------------------------------
 # Agent 3: Code Executor
+# -----------------------------------------
+
 def code_executor(state: ResearchState):
-    print("\n[Code Executor] Executing experiment...")
+    print("\n[Code Executor] Running experiment...")
 
     iteration = state.get("iteration_count", 0) + 1
+    errors = list(state.get("errors", []))
+    history = list(state.get("experiment_history", []))
+
+    try:
+        # Placeholder experiment result.
+        # Real Python execution will be integrated later.
+        raise RuntimeError("Simulated experiment execution failure")
+
+    except Exception as exc:
+        error_message = str(exc)
+        errors.append(error_message)
+
+        result = {
+            "status": "error",
+            "output": None,
+            "error": error_message
+        }
+
+    # Preserve every experiment attempt.
+    history.append({
+        "attempt": iteration,
+        "hypothesis": state.get("selected_hypothesis", ""),
+        "experiment_code": state.get("experiment_code", ""),
+        "result": result,
+        "critic_feedback": "",
+        "evaluation_status": "pending"
+    })
 
     return {
-        "execution_result": {
-            "status": "success",
-            "output": f"Sample experiment completed. Attempt {iteration}."
-        },
+        "execution_result": result,
+        "experiment_history": history,
         "iteration_count": iteration,
+        "errors": errors,
         "current_step": "critic_evaluation"
     }
 
 
+# -----------------------------------------
 # Agent 4: Critic
-def critic_agent(state: ResearchState):
-    print("\n[Critic Agent] Evaluating experiment results...")
+# -----------------------------------------
 
-    # Temporary evaluation logic for testing
-    if state.get("iteration_count", 0) < 2:
+def critic_agent(state: ResearchState):
+    print("\n[Critic Agent] Evaluating experiment...")
+
+    iteration = state.get("iteration_count", 0)
+    result = state.get("execution_result", {})
+
+    if result.get("status") != "success":
         status = "needs_improvement"
-        feedback = "More experimentation is required."
+        feedback = "Experiment execution failed. Review the error and correct the experiment."
+
+    elif iteration == 1:
+        status = "needs_improvement"
+        feedback = (
+            "Improve the experimental design and investigate "
+            "additional relevant research variables."
+        )
+
     else:
         status = "passed"
-        feedback = "Experiment passed the sample evaluation."
+        feedback = "The sample experiment passed the evaluation."
+
+    # Add critic evaluation to the latest history entry.
+    history = list(state.get("experiment_history", []))
+
+    if history:
+        history[-1] = {
+            **history[-1],
+            "critic_feedback": feedback,
+            "evaluation_status": status
+        }
+
+    print(f"Evaluation: {status}")
+    print(f"Feedback: {feedback}")
 
     return {
         "critic_feedback": feedback,
         "evaluation_status": status,
+        "experiment_history": history,
         "current_step": "evaluation_decision"
     }
 
 
-# Conditional routing
+# -----------------------------------------
+# Conditional Routing
+# -----------------------------------------
+
 def route_after_critic(state: ResearchState):
 
     status = state.get("evaluation_status", "")
     iteration = state.get("iteration_count", 0)
+    max_iterations = state.get("max_iterations", MAX_ITERATIONS)
 
     if status == "passed":
         return "research_synthesis"
 
-    if iteration >= MAX_ITERATIONS:
+    if iteration >= max_iterations:
         return "research_synthesis"
 
     return "hypothesis_generator"
 
 
+# -----------------------------------------
 # Agent 5: Research Synthesis
+# -----------------------------------------
+
 def research_synthesis(state: ResearchState):
     print("\n[Research Synthesis] Preparing final report...")
 
-    report = (
-        f"Research Question: {state.get('research_query', '')}\n"
-        f"Hypothesis: {state.get('selected_hypothesis', '')}\n"
-        f"Result: {state.get('execution_result', {})}\n"
-        f"Evaluation: {state.get('critic_feedback', '')}\n"
-        f"Total Attempts: {state.get('iteration_count', 0)}"
-    )
+    history = state.get("experiment_history", [])
+
+    report = [
+        f"Research Question: {state.get('research_query', '')}",
+        "",
+        "Experiment History:"
+    ]
+
+    for attempt in history:
+        report.append(f"\nAttempt: {attempt['attempt']}")
+        report.append(f"Hypothesis: {attempt['hypothesis']}")
+        report.append(f"Result: {attempt['result']}")
+        report.append(f"Feedback: {attempt['critic_feedback']}")
+        report.append(f"Evaluation: {attempt['evaluation_status']}")
+
+    report.append("\nFinal Evaluation:")
+    report.append(state.get("evaluation_status", "not evaluated"))
+
+    report.append("\nFinal Critic Feedback:")
+    report.append(state.get("critic_feedback", ""))
 
     return {
-        "final_report": report,
+        "final_report": "\n".join(report),
         "current_step": "completed"
     }
 
 
-# Build the workflow
+# -----------------------------------------
+# Build LangGraph Workflow
+# -----------------------------------------
+
 def build_research_graph():
 
     workflow = StateGraph(ResearchState)
