@@ -1,3 +1,4 @@
+
 # Python
 __pycache__/
 *.py[cod]
@@ -34,3 +35,8 @@ Thumbs.db
 data/raw/*
 data/processed/*
 experiments/results/
+
+# Temporary PDF extraction tests
+test_paper.pdf
+test_paper_extracted.json
+test_pdf.py
