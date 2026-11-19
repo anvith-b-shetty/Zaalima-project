@@ -2,6 +2,9 @@
 from langgraph.graph import StateGraph, START, END
 
 from scientific_discovery.orchestration.state import ResearchState
+from scientific_discovery.agents.hypothesis_generator.generator import (
+    generate_hypothesis
+)
 
 
 MAX_ITERATIONS = 3
@@ -24,32 +27,28 @@ def literature_reviewer(state: ResearchState):
 
 
 # -----------------------------------------
-# Agent 2: Hypothesis Generator
+# Agent 2: LLM Hypothesis Generator
 # -----------------------------------------
 
 def hypothesis_generator(state: ResearchState):
-    print("\n[Hypothesis Generator] Generating hypothesis...")
+    print("\n[Hypothesis Generator] Generating hypothesis using Gemma...")
 
     findings = state.get("research_findings", [])
     feedback = state.get("critic_feedback", "")
-    iteration = state.get("iteration_count", 0)
+    research_query = state.get("research_query", "")
 
-    if feedback:
-        hypothesis = (
-            "Revised hypothesis: "
-            "Investigate the research question using improved "
-            f"experimental design. Critic feedback: {feedback}"
-        )
-    else:
-        hypothesis = (
-            "Initial hypothesis: "
-            f"{findings[0] if findings else state.get('research_query', '')}"
-        )
+    # Generate a hypothesis using the local Gemma model.
+    hypothesis = generate_hypothesis(
+        research_query=research_query,
+        research_findings=findings,
+        critic_feedback=feedback
+    )
 
     hypotheses = list(state.get("generated_hypotheses", []))
     hypotheses.append(hypothesis)
 
-    print(f"Hypothesis: {hypothesis}")
+    print("\nGenerated Hypothesis:")
+    print(hypothesis)
 
     return {
         "generated_hypotheses": hypotheses,
@@ -59,7 +58,7 @@ def hypothesis_generator(state: ResearchState):
 
 
 # -----------------------------------------
-# Agent 3: Code Executor
+# Agent 3: Code Executor (Placeholder)
 # -----------------------------------------
 
 def code_executor(state: ResearchState):
@@ -72,7 +71,10 @@ def code_executor(state: ResearchState):
     try:
         # Placeholder experiment result.
         # Real Python execution will be integrated later.
-        raise RuntimeError("Simulated experiment execution failure")
+        result = {
+            "status": "success",
+            "output": f"Sample experiment completed. Attempt {iteration}."
+        }
 
     except Exception as exc:
         error_message = str(exc)
@@ -84,7 +86,6 @@ def code_executor(state: ResearchState):
             "error": error_message
         }
 
-    # Preserve every experiment attempt.
     history.append({
         "attempt": iteration,
         "hypothesis": state.get("selected_hypothesis", ""),
@@ -115,7 +116,10 @@ def critic_agent(state: ResearchState):
 
     if result.get("status") != "success":
         status = "needs_improvement"
-        feedback = "Experiment execution failed. Review the error and correct the experiment."
+        feedback = (
+            "Experiment execution failed. Review the error "
+            "and correct the experiment."
+        )
 
     elif iteration == 1:
         status = "needs_improvement"
@@ -128,7 +132,6 @@ def critic_agent(state: ResearchState):
         status = "passed"
         feedback = "The sample experiment passed the evaluation."
 
-    # Add critic evaluation to the latest history entry.
     history = list(state.get("experiment_history", []))
 
     if history:
