@@ -23,6 +23,7 @@ from .config import (
 )
 
 from .model import ExecutionRequest, ExecutionResponse
+from .output_handler import OutputHandler
 
 
 class CodeExecutor:
@@ -30,6 +31,7 @@ class CodeExecutor:
 
     def __init__(self, image: str = DOCKER_IMAGE):
         self.image = image
+        self.output_handler = OutputHandler()
 
     def _stop_container(self, container_name: str) -> None:
         """Stop a running container."""
@@ -119,13 +121,18 @@ class CodeExecutor:
         output_lock = threading.Lock()
         output_limit_reached = threading.Event()
         kill_started = threading.Event()
+        kill_lock = threading.Lock()
         execution_timed_out = False
 
         def stop_once():
             """Stop the container only once."""
-            if not kill_started.is_set():
+            with kill_lock:
+                if kill_started.is_set():
+                    return
+
                 kill_started.set()
-                self._stop_container(container_name)
+
+            self._stop_container(container_name)
 
         def read_stream(stream, key):
             """Read output without storing unlimited data."""
@@ -203,33 +210,12 @@ class CodeExecutor:
             (time.perf_counter() - started_at) * 1000
         )
 
-        stdout = bytes(buffers["stdout"]).decode(
-            "utf-8", errors="replace"
-        )
-
-        stderr = bytes(buffers["stderr"]).decode(
-            "utf-8", errors="replace"
-        )
-
-        if execution_timed_out:
-            status = "timeout"
-            stderr += "\nExecution time limit exceeded."
-
-        elif output_limit_reached.is_set():
-            status = "error"
-            stderr += "\nMaximum output size exceeded."
-
-        elif process.returncode == 0:
-            status = "success"
-
-        else:
-            status = "error"
-
-        return ExecutionResponse(
-            status=status,
-            stdout=stdout,
-            stderr=stderr,
+        # Delegate output processing to OutputHandler.
+        return self.output_handler.build_response(
+            stdout=bytes(buffers["stdout"]),
+            stderr=bytes(buffers["stderr"]),
             exit_code=process.returncode,
             execution_time_ms=execution_time_ms,
-            truncated_output=output_limit_reached.is_set(),
+            timed_out=execution_timed_out,
+            output_limit_reached=output_limit_reached.is_set(),
         )
