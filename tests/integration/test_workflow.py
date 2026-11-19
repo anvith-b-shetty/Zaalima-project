@@ -36,7 +36,11 @@ def main():
     for index, hypothesis in enumerate(
         final_state["generated_hypotheses"], start=1
     ):
-        print(f"{index}. {hypothesis}")
+        print(f"\nHypothesis {index}:")
+        print(hypothesis["hypothesis"])
+        print("Reasoning:", hypothesis["reasoning"])
+        print("Variables:", hypothesis["variables"])
+        print("Expected Relationship:", hypothesis["expected_relationship"])
 
     print("\n========== EXPERIMENT HISTORY ==========")
 

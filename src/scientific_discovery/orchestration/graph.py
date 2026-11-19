@@ -31,31 +31,42 @@ def literature_reviewer(state: ResearchState):
 # -----------------------------------------
 
 def hypothesis_generator(state: ResearchState):
-    print("\n[Hypothesis Generator] Generating hypothesis using Gemma...")
+    print("\n[Hypothesis Generator] Generating structured hypothesis using Gemma...")
 
     findings = state.get("research_findings", [])
     feedback = state.get("critic_feedback", "")
     research_query = state.get("research_query", "")
 
-    # Generate a hypothesis using the local Gemma model.
-    hypothesis = generate_hypothesis(
+    # Generate structured hypothesis using Gemma.
+    hypothesis_details = generate_hypothesis(
         research_query=research_query,
         research_findings=findings,
         critic_feedback=feedback
     )
 
+    # Extract the actual hypothesis text.
+    hypothesis = hypothesis_details["hypothesis"]
+
+    # Preserve all structured hypotheses.
     hypotheses = list(state.get("generated_hypotheses", []))
-    hypotheses.append(hypothesis)
+    hypotheses.append(hypothesis_details)
 
     print("\nGenerated Hypothesis:")
     print(hypothesis)
 
+    print("\nScientific Reasoning:")
+    print(hypothesis_details["reasoning"])
+
+    print("\nVariables:")
+    for variable in hypothesis_details["variables"]:
+        print("-", variable)
+
     return {
         "generated_hypotheses": hypotheses,
         "selected_hypothesis": hypothesis,
+        "selected_hypothesis_details": hypothesis_details,
         "current_step": "code_execution"
     }
-
 
 # -----------------------------------------
 # Agent 3: Code Executor (Placeholder)
