@@ -33,4 +33,8 @@ Thumbs.db
 # Data and generated files
 data/raw/*
 data/processed/*
+data/experiments/*
+!data/experiments/.gitkeep
+data/metrics/*
+!data/metrics/.gitkeep
 experiments/results/

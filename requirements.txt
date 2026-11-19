@@ -1,4 +1,7 @@
-fastapi==0.163.1
-uvicorn==0.54.0
-pydantic==2.14.3
-pytest==9.2.0
+fastapi>=0.110.0
+uvicorn>=0.30.0
+pydantic>=2.9.0
+pytest>=8.0.0
+streamlit>=1.32.0
+plotly>=5.19.0
+requests>=2.31.0
