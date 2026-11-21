@@ -16,6 +16,7 @@ class ResearchState(TypedDict, total=False):
     evaluation_status: str
 
     experiment_code: str
+    experiment_design: Dict[str, Any]
     execution_result: Dict[str, Any]
     experiment_history: List[Dict[str, Any]]
 
