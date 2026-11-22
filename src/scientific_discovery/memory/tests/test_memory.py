@@ -95,7 +95,6 @@ def test_token_cost_calculation(temp_store):
     """Test token summation and USD cost estimation."""
     exp = temp_store.create_experiment(name="Cost Test", hypothesis="Test")
 
-    # Update with gemini-1.5-flash: prompt $0.075/1M, completion $0.30/1M
     cost = temp_store.update_cost(
         experiment_id=exp.experiment_id,
         model_name="gemini-1.5-flash",
@@ -104,7 +103,6 @@ def test_token_cost_calculation(temp_store):
     )
 
     assert cost.total_tokens == 2_000_000
-    # Expected cost = 0.075 + 0.30 = 0.375
     assert cost.cost_usd == pytest.approx(0.375, rel=1e-3)
 
 
@@ -150,8 +148,55 @@ def test_persistence_reload(temp_store):
     """Test that records persist and reload accurately from JSON file."""
     temp_store.create_experiment(name="Persistent Exp", hypothesis="Testing persistence")
     
-    # Reload a new instance pointing to same file
     new_store = ExperimentMemoryStore(storage_path=temp_store.storage_path)
     runs = new_store.list_experiments()
     assert len(runs) == 1
     assert runs[0].name == "Persistent Exp"
+
+
+# ==================== MONDAY DELIVERABLES TESTS ====================
+
+def test_search_and_delete(temp_store):
+    """Test searching experiments by query and deleting by ID (Monday)."""
+    e1 = temp_store.create_experiment(name="Cancer Immunology", hypothesis="PD-1 expression", domain="Immunology")
+    e2 = temp_store.create_experiment(name="Kinase Docking", hypothesis="Inhibitor binding", domain="Biochemistry")
+
+    search_res = temp_store.search_experiments("PD-1")
+    assert len(search_res) == 1
+    assert search_res[0].experiment_id == e1.experiment_id
+
+    # Test delete
+    assert temp_store.delete_experiment(e1.experiment_id) is True
+    assert temp_store.get_experiment(e1.experiment_id) is None
+    assert len(temp_store.list_experiments()) == 1
+
+
+def test_export_csv_and_json(temp_store):
+    """Test export of research history to CSV and JSON formats (Monday)."""
+    temp_store.create_experiment(name="Export Test", hypothesis="Hypothesis for export")
+
+    csv_text = temp_store.export_to_csv()
+    assert "experiment_id" in csv_text
+    assert "Export Test" in csv_text
+
+    json_text = temp_store.export_to_json()
+    assert "Export Test" in json_text
+    assert "experiment_id" in json_text
+
+
+def test_compare_experiments(temp_store):
+    """Test side-by-side run comparison calculations (Monday)."""
+    e1 = temp_store.create_experiment(name="Run A", hypothesis="H_A")
+    e1.p_value = 0.01
+    e1.execution_time_ms = 500
+    temp_store.update_experiment(e1)
+
+    e2 = temp_store.create_experiment(name="Run B", hypothesis="H_B")
+    e2.p_value = 0.05
+    e2.execution_time_ms = 800
+    temp_store.update_experiment(e2)
+
+    cmp = temp_store.compare_experiments(e1.experiment_id, e2.experiment_id)
+    assert cmp is not None
+    assert cmp["p_value_diff"] == -0.04
+    assert cmp["runtime_diff_ms"] == -300

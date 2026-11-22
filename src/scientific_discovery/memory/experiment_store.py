@@ -129,6 +129,122 @@ class ExperimentMemoryStore:
         self.save_to_disk()
         return exp.cost
 
+    def delete_experiment(self, experiment_id: str) -> bool:
+        """Remove an experiment from memory and disk."""
+        if experiment_id in self._experiments:
+            del self._experiments[experiment_id]
+            self.save_to_disk()
+            return True
+        return False
+
+    def search_experiments(self, query: str) -> list[ExperimentRun]:
+        """Search across experiment hypotheses, names, domains, and citations."""
+        q = query.lower().strip()
+        if not q:
+            return self.list_experiments()
+
+        results = []
+        for exp in self._experiments.values():
+            match = (
+                q in exp.name.lower()
+                or q in exp.hypothesis.lower()
+                or q in exp.domain.lower()
+                or any(q in c.title.lower() or any(q in a.lower() for a in c.authors) for c in exp.citations)
+                or q in exp.generated_code.lower()
+            )
+            if match:
+                results.append(exp)
+
+        results.sort(key=lambda x: x.created_at, reverse=True)
+        return results
+
+    def compare_experiments(self, exp_id1: str, exp_id2: str) -> Optional[dict[str, Any]]:
+        """Compare two experiments side-by-side for review."""
+        e1 = self.get_experiment(exp_id1)
+        e2 = self.get_experiment(exp_id2)
+        if not e1 or not e2:
+            return None
+
+        return {
+            "exp1": {
+                "id": e1.experiment_id,
+                "name": e1.name,
+                "domain": e1.domain,
+                "status": e1.status,
+                "p_value": e1.p_value,
+                "tokens": e1.cost.total_tokens,
+                "cost_usd": e1.cost.cost_usd,
+                "citations_count": len(e1.citations),
+                "steps_count": len(e1.workflow_steps),
+                "runtime_ms": e1.execution_time_ms,
+            },
+            "exp2": {
+                "id": e2.experiment_id,
+                "name": e2.name,
+                "domain": e2.domain,
+                "status": e2.status,
+                "p_value": e2.p_value,
+                "tokens": e2.cost.total_tokens,
+                "cost_usd": e2.cost.cost_usd,
+                "citations_count": len(e2.citations),
+                "steps_count": len(e2.workflow_steps),
+                "runtime_ms": e2.execution_time_ms,
+            },
+            "p_value_diff": (
+                round(e1.p_value - e2.p_value, 4)
+                if (e1.p_value is not None and e2.p_value is not None)
+                else None
+            ),
+            "cost_diff": round(e1.cost.cost_usd - e2.cost.cost_usd, 5),
+            "runtime_diff_ms": e1.execution_time_ms - e2.execution_time_ms,
+        }
+
+    def export_to_csv(self) -> str:
+        """Export research experiment history to CSV format."""
+        import csv
+        import io
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "experiment_id",
+            "name",
+            "domain",
+            "status",
+            "p_value",
+            "tokens",
+            "cost_usd",
+            "citations_count",
+            "steps_count",
+            "runtime_ms",
+            "created_at",
+        ])
+
+        for exp in self.list_experiments(limit=1000):
+            writer.writerow([
+                exp.experiment_id,
+                exp.name,
+                exp.domain,
+                exp.status,
+                exp.p_value if exp.p_value is not None else "",
+                exp.cost.total_tokens,
+                exp.cost.cost_usd,
+                len(exp.citations),
+                len(exp.workflow_steps),
+                exp.execution_time_ms,
+                exp.created_at.isoformat(),
+            ])
+
+        return output.getvalue()
+
+    def export_to_json(self) -> str:
+        """Export research experiment history as a JSON string."""
+        return json.dumps(
+            [e.model_dump(mode="json") for e in self.list_experiments(limit=1000)],
+            indent=2,
+            default=str,
+        )
+
     def get_summary_metrics(self) -> dict[str, Any]:
         """Compute aggregate platform-level statistics for the dashboard."""
         total = len(self._experiments)
