@@ -63,7 +63,7 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
         )
 
     df = pd.DataFrame(records)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
     # Action Toolbar: Export Data
     col_exp1, col_exp2, col_dummy = st.columns([2, 2, 4])
@@ -74,7 +74,7 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
             data=csv_data,
             file_name="scientific_discovery_history.csv",
             mime="text/csv",
-            use_container_width=True,
+            width="stretch",
         )
     with col_exp2:
         json_data = store.export_to_json()
@@ -83,7 +83,7 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
             data=json_data,
             file_name="scientific_discovery_history.json",
             mime="application/json",
-            use_container_width=True,
+            width="stretch",
         )
 
     st.markdown("---")
@@ -142,7 +142,7 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
     with col_del:
         st.write("")
         st.write("")
-        if st.button("🗑️ Delete", type="secondary", use_container_width=True):
+        if st.button("🗑️ Delete", type="secondary", width="stretch"):
             if store.delete_experiment(selected_id):
                 st.success(f"Deleted {selected_id}")
                 st.rerun()

@@ -200,3 +200,67 @@ def test_compare_experiments(temp_store):
     assert cmp is not None
     assert cmp["p_value_diff"] == -0.04
     assert cmp["runtime_diff_ms"] == -300
+
+
+# ==================== TUESDAY DELIVERABLES TESTS ====================
+
+def test_workflow_tracker_retry_step(temp_store):
+    """Test self-debugging retry state transition in WorkflowTracker (Tuesday)."""
+    exp = temp_store.create_experiment(name="Retry Test", hypothesis="Testing RL loop")
+    tracker = WorkflowTracker(store=temp_store, experiment_id=exp.experiment_id)
+
+    step = tracker.start_step(
+        agent_role="code_executor",
+        title="Docker Container Run",
+        description="Executing generated script",
+    )
+    assert step.status == "running"
+
+    retried_step = tracker.retry_step(step.step_id, retry_reason="SyntaxError on line 4")
+    assert retried_step.status == "retrying"
+    assert "RETRY TRIGGERED: SyntaxError on line 4" in retried_step.logs
+
+
+def test_workflow_summary_metrics(temp_store):
+    """Test computation of pipeline progression and stage status map (Tuesday)."""
+    exp = temp_store.create_experiment(name="Summary Test", hypothesis="Progression metrics")
+
+    s1 = WorkflowStep(
+        step_id="step-1",
+        agent_role="literature_reviewer",
+        title="Literature Search",
+        status="completed",
+        duration_ms=500,
+    )
+    s2 = WorkflowStep(
+        step_id="step-2",
+        agent_role="hypothesis_generator",
+        title="Hypothesis Drafting",
+        status="completed",
+        duration_ms=1200,
+    )
+    s3 = WorkflowStep(
+        step_id="step-3",
+        agent_role="code_executor",
+        title="Sandbox Execution",
+        status="retrying",
+        duration_ms=300,
+    )
+
+    temp_store.add_workflow_step(exp.experiment_id, s1)
+    temp_store.add_workflow_step(exp.experiment_id, s2)
+    temp_store.add_workflow_step(exp.experiment_id, s3)
+
+    summary = WorkflowTracker.get_workflow_summary(exp)
+    assert summary["total_stages"] == 5
+    assert summary["completed_stages"] == 2
+    assert summary["progress_percent"] == 40.0
+    assert summary["total_duration_ms"] == 2000
+    assert summary["retry_count"] == 1
+    assert summary["stage_status"]["literature_reviewer"] == "completed"
+    assert summary["stage_status"]["hypothesis_generator"] == "completed"
+    assert summary["stage_status"]["code_executor"] == "retrying"
+    assert summary["stage_status"]["critic_agent"] == "pending"
+    assert summary["stage_status"]["synthesis"] == "pending"
+    assert summary["bottleneck_stage"] == "hypothesis_generator"
+

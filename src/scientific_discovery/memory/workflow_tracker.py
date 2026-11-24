@@ -2,7 +2,7 @@
 Workflow Step Tracker for the Multi-Agent System.
 
 Allows agent components to record real-time step progress, execution logs,
-and duration, seamlessly publishing them into the experiment memory.
+duration, and self-debugging retries, publishing them into the experiment memory.
 """
 
 from datetime import datetime, timezone
@@ -10,8 +10,17 @@ import time
 from typing import Any, Optional
 import uuid
 
-from .models import AgentRole, StepStatus, WorkflowStep
+from .models import AgentRole, ExperimentRun, StepStatus, WorkflowStep
 from .experiment_store import ExperimentMemoryStore
+
+
+PIPELINE_STAGES: list[AgentRole] = [
+    "literature_reviewer",
+    "hypothesis_generator",
+    "code_executor",
+    "critic_agent",
+    "synthesis",
+]
 
 
 class WorkflowTracker:
@@ -93,3 +102,59 @@ class WorkflowTracker:
 
         self.store.add_workflow_step(self.experiment_id, step)
         return step
+
+    def retry_step(
+        self,
+        step_id: str,
+        retry_reason: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> Optional[WorkflowStep]:
+        """Mark a step for self-debugging retry (RL feedback loop)."""
+        if step_id not in self._active_steps:
+            return None
+
+        step, start_t = self._active_steps[step_id]
+        step.status = "retrying"
+        step.logs.append(f"RETRY TRIGGERED: {retry_reason}")
+        if metadata:
+            step.metadata.update(metadata)
+
+        self.store.add_workflow_step(self.experiment_id, step)
+        return step
+
+    @staticmethod
+    def get_workflow_summary(experiment: ExperimentRun) -> dict[str, Any]:
+        """Compute pipeline progression metrics, stage latencies, and bottlenecks."""
+        stage_status: dict[str, str] = {s: "pending" for s in PIPELINE_STAGES}
+        stage_durations: dict[str, int] = {s: 0 for s in PIPELINE_STAGES}
+        retry_count = 0
+
+        for step in experiment.workflow_steps:
+            role = step.agent_role
+            if step.status == "retrying":
+                retry_count += 1
+            if role in stage_status:
+                stage_status[role] = step.status
+                stage_durations[role] += step.duration_ms
+
+        completed_count = sum(1 for s in stage_status.values() if s == "completed")
+        total_stages = len(PIPELINE_STAGES)
+        progress_pct = round((completed_count / total_stages) * 100, 1)
+
+        total_duration_ms = sum(s.duration_ms for s in experiment.workflow_steps)
+
+        # Identify bottleneck (slowest stage)
+        bottleneck = None
+        if any(d > 0 for d in stage_durations.values()):
+            bottleneck = max(stage_durations.items(), key=lambda x: x[1])[0]
+
+        return {
+            "total_stages": total_stages,
+            "completed_stages": completed_count,
+            "progress_percent": progress_pct,
+            "stage_status": stage_status,
+            "stage_durations": stage_durations,
+            "total_duration_ms": total_duration_ms,
+            "bottleneck_stage": bottleneck,
+            "retry_count": retry_count,
+        }

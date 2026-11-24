@@ -54,13 +54,13 @@ Provide the supervisor monitoring dashboard, experiment memory management, token
 ### 1. Memory and Storage (`src/scientific_discovery/memory/`)
 - `models.py`: Strongly typed Pydantic models for `WorkflowStep`, `Citation`, `TokenCostRecord`, and `ExperimentRun`.
 - `experiment_store.py`: Persistent storage manager handling atomic saves, keyword search, side-by-side run comparison, and CSV/JSON exports (Monday deliverable).
-- `workflow_tracker.py`: Real-time lifecycle manager for step transitions (`start_step`, `log`, `complete_step`, `fail_step`).
+- `workflow_tracker.py`: Real-time lifecycle manager with step progression tracking, RL self-debugging retries, and pipeline bottleneck computation (Tuesday deliverable).
 - `config.py`: Storage paths and model pricing table for token cost auditing.
 
 ### 2. Streamlit Dashboard (`src/scientific_discovery/ui/`)
 - `app.py`: Main dashboard application with sidebar experiment selector and interactive simulator.
 - `components/experiment_history_view.py`: Research History Interface with keyword search, side-by-side run comparison, run deletion, and CSV/JSON exports (Monday deliverable).
-- `components/workflow_view.py`: Displays active agents, step durations, logs, generated Python code, and execution output.
+- `components/workflow_view.py`: Multi-Agent Workflow Monitor with 5-stage pipeline DAG, percentage progression bar, stage latency telemetry, and Plotly execution duration breakdown (Tuesday deliverable).
 - `components/citation_view.py`: Explores grounded peer-reviewed literature from ArXiv and PubMed with vector similarity metrics.
 - `components/cost_view.py`: Visualizes prompt/completion token splits and monetary spend ($ USD).
 - `components/synthesis_preview.py`: Academic LaTeX abstract renderer with `.tex` source and download support.

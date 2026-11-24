@@ -120,7 +120,7 @@ with st.sidebar:
             "Hypothesis:",
             "Promoter methylations inhibit transcriptional binding affinity non-linearly.",
         )
-        if st.button("🚀 Initialize Pipeline", use_container_width=True):
+        if st.button("🚀 Initialize Pipeline", width="stretch"):
             new_run = store.create_experiment(name=new_name, domain=new_domain, hypothesis=new_hypo)
             st.session_state.selected_exp_id = new_run.experiment_id
             st.success(f"Created {new_run.experiment_id}!")
@@ -128,7 +128,7 @@ with st.sidebar:
 
     # Quick Action: Run Interactive Simulation
     st.markdown("#### ⚡ Pipeline Simulator")
-    if st.button("▶️ Simulate Discovery Step", use_container_width=True):
+    if st.button("▶️ Simulate Discovery Step", width="stretch"):
         active_exp = store.get_experiment(st.session_state.selected_exp_id)
         if active_exp:
             step_num = len(active_exp.workflow_steps) + 1
