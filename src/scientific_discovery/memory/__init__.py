@@ -13,6 +13,7 @@ from .models import (
 )
 from .experiment_store import ExperimentMemoryStore
 from .workflow_tracker import PIPELINE_STAGES, WorkflowTracker
+from .agent_monitor import AgentMonitorClient
 
 __all__ = [
     "AgentRole",
@@ -23,6 +24,7 @@ __all__ = [
     "WorkflowStep",
     "ExperimentMemoryStore",
     "WorkflowTracker",
+    "AgentMonitorClient",
     "PIPELINE_STAGES",
     "DEFAULT_EXPERIMENTS_FILE",
     "MODEL_PRICING",

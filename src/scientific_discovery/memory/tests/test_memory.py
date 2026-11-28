@@ -14,6 +14,7 @@ from src.scientific_discovery.memory.models import (
     WorkflowStep,
 )
 from src.scientific_discovery.memory.workflow_tracker import WorkflowTracker
+from src.scientific_discovery.memory.agent_monitor import AgentMonitorClient
 
 
 @pytest.fixture
@@ -263,4 +264,47 @@ def test_workflow_summary_metrics(temp_store):
     assert summary["stage_status"]["critic_agent"] == "pending"
     assert summary["stage_status"]["synthesis"] == "pending"
     assert summary["bottleneck_stage"] == "hypothesis_generator"
+
+
+# ==================== FRIDAY DELIVERABLES TESTS ====================
+
+def test_agent_monitor_client(temp_store):
+    """Test agent integration client across discovery stages (Friday)."""
+    exp = temp_store.create_experiment(name="Integration Test", hypothesis="Integration")
+    client = AgentMonitorClient(store=temp_store)
+
+    # 1. Literature Review
+    cit = Citation(citation_id="arxiv:1234", title="Test Paper", source="arxiv")
+    client.record_literature_retrieval(exp.experiment_id, [cit], duration_ms=200)
+
+    # 2. Hypothesis
+    client.record_hypothesis(exp.experiment_id, "Updated Hypothesis", duration_ms=150)
+
+    # 3. Code Execution
+    client.record_code_execution(
+        exp.experiment_id,
+        code="print('done')",
+        stdout="done\n",
+        stderr="",
+        exit_code=0,
+        execution_time_ms=300,
+    )
+
+    # 4. Critic Evaluation
+    client.record_critic_evaluation(
+        exp.experiment_id,
+        p_value=0.002,
+        verdict="Statistically significant result.",
+        confidence_interval=(0.95, 0.99),
+        duration_ms=100,
+    )
+
+    updated = temp_store.get_experiment(exp.experiment_id)
+    assert len(updated.citations) == 1
+    assert updated.hypothesis == "Updated Hypothesis"
+    assert updated.execution_stdout == "done\n"
+    assert updated.p_value == 0.002
+    assert updated.status == "completed"
+    assert len(updated.workflow_steps) == 4
+
 

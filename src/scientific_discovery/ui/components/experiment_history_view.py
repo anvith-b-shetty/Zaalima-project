@@ -25,27 +25,14 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
     experiments = store.list_experiments(limit=100)
 
     if not experiments:
-        st.markdown(
-            """
-            <div style="
-                background: #ffffff;
-                border: 2px dashed #cbd5e1;
-                border-radius: 14px;
-                padding: 36px 24px;
-                text-align: center;
-                margin-top: 10px;
-            ">
-                <div style="font-size: 2.2rem; margin-bottom: 8px;">📜</div>
-                <div style="font-weight: 700; color: #0f172a; font-size: 1.1rem; margin-bottom: 4px;">
-                    No Experiment Runs Found
-                </div>
-                <div style="font-size: 0.88rem; color: #64748b; max-width: 450px; margin: 0 auto;">
-                    Load sample discovery cycles to explore the archive interface.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        empty_html = (
+            '<div style="background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 36px 24px; text-align: center; margin-top: 10px;">'
+            '<div style="font-size: 2.2rem; margin-bottom: 8px;">📜</div>'
+            '<div style="font-weight: 700; color: #0f172a; font-size: 1.1rem; margin-bottom: 4px;">No Experiment Runs Found</div>'
+            '<div style="font-size: 0.88rem; color: #64748b; max-width: 450px; margin: 0 auto;">Load sample discovery cycles to explore the archive interface.</div>'
+            '</div>'
         )
+        st.markdown(empty_html, unsafe_allow_html=True)
         if st.button("🌱 Load Sample Discovery Cycles", width="stretch"):
             store.seed_sample_data()
             st.rerun()
@@ -141,87 +128,57 @@ def render_history_view(store: ExperimentMemoryStore) -> str:
             if comparison:
                 c_col1, c_col2, c_col3 = st.columns(3)
                 with c_col1:
-                    st.markdown(
-                        f"""
-                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                            <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">
-                                🅰️ Baseline: <code style="color: #4f46e5;">{cmp_id1}</code>
-                            </div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Name:</strong> {comparison['exp1']['name']}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Status:</strong> {comparison['exp1']['status'].upper()}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>P-Value:</strong> {comparison['exp1']['p_value']}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Tokens:</strong> {comparison['exp1']['tokens']:,}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Cost:</strong> ${comparison['exp1']['cost_usd']:.4f}</div>
-                            <div style="font-size: 0.83rem; color: #475569;"><strong>Runtime:</strong> {comparison['exp1']['runtime_ms']} ms</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                    card_a_html = (
+                        f'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">'
+                        f'<div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">🅰️ Baseline: <code style="color: #4f46e5;">{cmp_id1}</code></div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Name:</strong> {comparison["exp1"]["name"]}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Status:</strong> {comparison["exp1"]["status"].upper()}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>P-Value:</strong> {comparison["exp1"]["p_value"]}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Tokens:</strong> {comparison["exp1"]["tokens"]:,}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Cost:</strong> ${comparison["exp1"]["cost_usd"]:.4f}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569;"><strong>Runtime:</strong> {comparison["exp1"]["runtime_ms"]} ms</div>'
+                        f'</div>'
                     )
+                    st.markdown(card_a_html, unsafe_allow_html=True)
                 with c_col2:
-                    st.markdown(
-                        f"""
-                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #10b981; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                            <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">
-                                🅱️ Candidate: <code style="color: #10b981;">{cmp_id2}</code>
-                            </div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Name:</strong> {comparison['exp2']['name']}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Status:</strong> {comparison['exp2']['status'].upper()}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>P-Value:</strong> {comparison['exp2']['p_value']}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Tokens:</strong> {comparison['exp2']['tokens']:,}</div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Cost:</strong> ${comparison['exp2']['cost_usd']:.4f}</div>
-                            <div style="font-size: 0.83rem; color: #475569;"><strong>Runtime:</strong> {comparison['exp2']['runtime_ms']} ms</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                    card_b_html = (
+                        f'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #10b981; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">'
+                        f'<div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">🅱️ Candidate: <code style="color: #10b981;">{cmp_id2}</code></div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Name:</strong> {comparison["exp2"]["name"]}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Status:</strong> {comparison["exp2"]["status"].upper()}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>P-Value:</strong> {comparison["exp2"]["p_value"]}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Tokens:</strong> {comparison["exp2"]["tokens"]:,}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 5px;"><strong>Cost:</strong> ${comparison["exp2"]["cost_usd"]:.4f}</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569;"><strong>Runtime:</strong> {comparison["exp2"]["runtime_ms"]} ms</div>'
+                        f'</div>'
                     )
+                    st.markdown(card_b_html, unsafe_allow_html=True)
                 with c_col3:
                     p_diff = comparison.get("p_value_diff")
                     cost_diff = comparison["cost_diff"]
                     runtime_diff = comparison["runtime_diff_ms"]
 
-                    # Color-code deltas
                     cost_color = "#10b981" if cost_diff <= 0 else "#ef4444"
                     runtime_color = "#10b981" if runtime_diff <= 0 else "#ef4444"
+                    p_str = f"{p_diff:+.4f}" if p_diff is not None else "N/A"
 
-                    st.markdown(
-                        f"""
-                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #f59e0b; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                            <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">
-                                📊 Comparison Delta
-                            </div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 8px;">
-                                <strong>P-Value Δ:</strong>
-                                <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #0f172a;">
-                                    {f'{p_diff:+.4f}' if p_diff is not None else 'N/A'}
-                                </span>
-                            </div>
-                            <div style="font-size: 0.83rem; color: #475569; margin-bottom: 8px;">
-                                <strong>Cost Δ:</strong>
-                                <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: {cost_color};">
-                                    ${cost_diff:+.5f}
-                                </span>
-                            </div>
-                            <div style="font-size: 0.83rem; color: #475569;">
-                                <strong>Runtime Δ:</strong>
-                                <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: {runtime_color};">
-                                    {runtime_diff:+d} ms
-                                </span>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                    delta_html = (
+                        f'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #f59e0b; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">'
+                        f'<div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 10px;">📊 Comparison Delta</div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 8px;"><strong>P-Value Δ:</strong> <span style="font-weight: 700; font-family: JetBrains Mono, monospace; color: #0f172a;">{p_str}</span></div>'
+                        f'<div style="font-size: 0.83rem; color: #475569; margin-bottom: 8px;"><strong>Cost Δ:</strong> <span style="font-weight: 700; font-family: JetBrains Mono, monospace; color: {cost_color};">${cost_diff:+.5f}</span></div>'
+                        f'<div style="font-size: 0.83rem; color: #475569;"><strong>Runtime Δ:</strong> <span style="font-weight: 700; font-family: JetBrains Mono, monospace; color: {runtime_color};">{runtime_diff:+d} ms</span></div>'
+                        f'</div>'
                     )
+                    st.markdown(delta_html, unsafe_allow_html=True)
         else:
             st.info("Need at least 2 experiment runs to compare.")
 
     # Selector to inspect a specific experiment
     st.markdown(
-        """
-        <div style="margin-top: 10px; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>🔍</span>
-            <span>Switch Active Experiment or Purge Run</span>
-        </div>
-        """,
+        '<div style="margin-top: 10px; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>🔍</span><span>Switch Active Experiment or Purge Run</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     col_sel, col_del = st.columns([5, 1])

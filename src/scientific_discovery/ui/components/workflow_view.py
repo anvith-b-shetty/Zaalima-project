@@ -9,7 +9,7 @@ import plotly.express as px
 import streamlit as st
 from src.scientific_discovery.memory.models import ExperimentRun, WorkflowStep
 from src.scientific_discovery.memory.workflow_tracker import PIPELINE_STAGES, WorkflowTracker
-from src.scientific_discovery.ui.theme import render_section_header, render_stat_tile
+from src.scientific_discovery.ui.theme import render_section_header
 
 
 AGENT_METADATA = {
@@ -126,31 +126,22 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
     with col4:
         st.metric("Execution Steps", len(experiment.workflow_steps))
 
-    # 2. Pipeline Progression Bar with styled header
+    # 2. Pipeline Progression Bar with clean header
     progress_val = min(1.0, summary["completed_stages"] / summary["total_stages"])
-    st.markdown(
-        f"""
-        <div style="margin-top: 20px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.85rem; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em;">
-                Autonomous Pipeline Progress
-            </span>
-            <span style="font-size: 0.82rem; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 2px 10px; border-radius: 9999px;">
-                {summary['progress_percent']}% ({summary['completed_stages']} of {summary['total_stages']} Stages Completed)
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    prog_header = (
+        f'<div style="margin-top: 20px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">'
+        f'<span style="font-size: 0.85rem; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em;">Autonomous Pipeline Progress</span>'
+        f'<span style="font-size: 0.82rem; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 2px 10px; border-radius: 9999px;">{summary["progress_percent"]}% ({summary["completed_stages"]} of {summary["total_stages"]} Stages Completed)</span>'
+        f'</div>'
     )
+    st.markdown(prog_header, unsafe_allow_html=True)
     st.progress(progress_val)
 
     # 3. Visual Multi-Agent Pipeline DAG Cards
     st.markdown(
-        """
-        <div style="margin-top: 24px; margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>🗺️</span>
-            <span>Multi-Agent Architecture Pipeline DAG</span>
-        </div>
-        """,
+        '<div style="margin-top: 24px; margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>🗺️</span><span>Multi-Agent Architecture Pipeline DAG</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     flow_cols = st.columns(len(PIPELINE_STAGES))
@@ -161,7 +152,6 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
         duration = summary["stage_durations"].get(role, 0)
         cfg = STATUS_CONFIG.get(status, STATUS_CONFIG["pending"])
         dur_label = f"{duration:,} ms" if duration > 0 else "Pending"
-
         pulse_dot = '<span class="live-pulse"></span>' if cfg["pulse"] else ""
 
         with flow_cols[i]:
@@ -183,12 +173,9 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
 
     # 4. Latency & Performance Breakdown
     st.markdown(
-        """
-        <div style="margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>⚡</span>
-            <span>Pipeline Execution & Latency Telemetry</span>
-        </div>
-        """,
+        '<div style="margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>⚡</span><span>Pipeline Execution & Latency Telemetry</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     p1, p2, p3, p4 = st.columns(4)
@@ -248,12 +235,9 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
 
     # 5. Formulated Scientific Hypothesis Section
     st.markdown(
-        """
-        <div style="margin-bottom: 10px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>💡</span>
-            <span>Formulated Scientific Hypothesis</span>
-        </div>
-        """,
+        '<div style="margin-bottom: 10px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>💡</span><span>Formulated Scientific Hypothesis</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     if experiment.hypothesis:
@@ -271,12 +255,9 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
 
     # 6. Detailed Step-by-Step Execution Traces
     st.markdown(
-        """
-        <div style="margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>🔄</span>
-            <span>Step-by-Step Execution Traces & Agent Heartbeats</span>
-        </div>
-        """,
+        '<div style="margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>🔄</span><span>Step-by-Step Execution Traces & Agent Heartbeats</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     if not experiment.workflow_steps:
@@ -310,12 +291,9 @@ def render_workflow_view(experiment: ExperimentRun) -> None:
     if experiment.generated_code or experiment.execution_stdout:
         st.markdown("---")
         st.markdown(
-            """
-            <div style="margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                <span>🧪</span>
-                <span>Sandbox Code & Execution Output</span>
-            </div>
-            """,
+            '<div style="margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+            '<span>🧪</span><span>Sandbox Code & Execution Output</span>'
+            '</div>',
             unsafe_allow_html=True,
         )
         tab_code, tab_out = st.tabs(["💻 Generated Python Code", "📄 Docker Sandbox Output"])

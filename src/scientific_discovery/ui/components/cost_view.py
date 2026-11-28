@@ -26,12 +26,9 @@ def render_cost_view(experiment: ExperimentRun, summary_metrics: dict) -> None:
 
     # Experiment-level cost metrics
     st.markdown(
-        f"""
-        <div style="margin-bottom: 12px; font-size: 1.02rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>💳</span>
-            <span>Resource Expenditure for Active Run: <code style="font-size: 0.9rem; color: #4f46e5;">{experiment.experiment_id}</code></span>
-        </div>
-        """,
+        f'<div style="margin-bottom: 12px; font-size: 1.02rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        f'<span>💳</span><span>Resource Expenditure for Active Run: <code style="font-size: 0.9rem; color: #4f46e5;">{experiment.experiment_id}</code></span>'
+        f'</div>',
         unsafe_allow_html=True,
     )
     c1, c2, c3, c4 = st.columns(4)
@@ -90,58 +87,34 @@ def render_cost_view(experiment: ExperimentRun, summary_metrics: dict) -> None:
             st.plotly_chart(fig_donut, width="stretch")
 
         with col_stats:
-            st.markdown(
-                f"""
-                <div style="
-                    background: #ffffff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 18px 20px;
-                    margin-top: 15px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-                ">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">
-                        Token Economy Diagnostics
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 0.8rem; color: #64748b;">Context Input Ratio:</span>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: #0f172a; font-family: 'JetBrains Mono', monospace;">
-                            {(experiment.cost.prompt_tokens / experiment.cost.total_tokens)*100:.1f}%
-                        </span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 0.8rem; color: #64748b;">Output Ratio:</span>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: #0f172a; font-family: 'JetBrains Mono', monospace;">
-                            {(experiment.cost.completion_tokens / experiment.cost.total_tokens)*100:.1f}%
-                        </span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 0.8rem; color: #64748b;">Prompt-to-Output:</span>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: #4f46e5; font-family: 'JetBrains Mono', monospace;">
-                            {ratio}
-                        </span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.8rem; color: #64748b;">Cost / 1k Tokens:</span>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: #10b981; font-family: 'JetBrains Mono', monospace;">
-                            ${avg_cost_1k:.5f}
-                        </span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            p_pct = (experiment.cost.prompt_tokens / experiment.cost.total_tokens) * 100
+            c_pct = (experiment.cost.completion_tokens / experiment.cost.total_tokens) * 100
+            stats_html = (
+                f'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin-top: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
+                f'<div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Token Economy Diagnostics</div>'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+                f'<span style="font-size: 0.8rem; color: #64748b;">Context Input Ratio:</span>'
+                f'<span style="font-size: 0.82rem; font-weight: 700; color: #0f172a; font-family: JetBrains Mono, monospace;">{p_pct:.1f}%</span></div>'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+                f'<span style="font-size: 0.8rem; color: #64748b;">Output Ratio:</span>'
+                f'<span style="font-size: 0.82rem; font-weight: 700; color: #0f172a; font-family: JetBrains Mono, monospace;">{c_pct:.1f}%</span></div>'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+                f'<span style="font-size: 0.8rem; color: #64748b;">Prompt-to-Output:</span>'
+                f'<span style="font-size: 0.82rem; font-weight: 700; color: #4f46e5; font-family: JetBrains Mono, monospace;">{ratio}</span></div>'
+                f'<div style="display: flex; justify-content: space-between; align-items: center;">'
+                f'<span style="font-size: 0.8rem; color: #64748b;">Cost / 1k Tokens:</span>'
+                f'<span style="font-size: 0.82rem; font-weight: 700; color: #10b981; font-family: JetBrains Mono, monospace;">${avg_cost_1k:.5f}</span></div>'
+                f'</div>'
             )
+            st.markdown(stats_html, unsafe_allow_html=True)
 
     st.markdown("---")
 
     # Platform-wide Aggregate Statistics
     st.markdown(
-        """
-        <div style="margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <span>🌐</span>
-            <span>Platform-Wide Discovery Telemetry (All Runs)</span>
-        </div>
-        """,
+        '<div style="margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">'
+        '<span>🌐</span><span>Platform-Wide Discovery Telemetry (All Runs)</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
     p1, p2, p3, p4 = st.columns(4)
